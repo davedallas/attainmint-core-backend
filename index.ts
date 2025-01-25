@@ -2,14 +2,13 @@ import express, { Express, Request, Response , Application } from 'express';
 const session = require('express-session');
 const userModel = require('./models/user.model');
 import dotenv from 'dotenv';
-const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
-const authRouter = require('./routes/auth.routes');
-
+import authRouter from './routes/auth.routes';
+require('./config/dbConnect')
 
 //For env File 
 dotenv.config();
@@ -29,11 +28,12 @@ app.use(cors(
     credentials : true
   }
 ));
+// parse request bodies
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 require('./config/passport');
 
-app.get('/api/auth', authRouter)
+app.use('/api/auth', authRouter)
 
 
 passport.use(
@@ -49,6 +49,7 @@ passport.use(
         if (!isMatch) {
           return done(null, false, { message: 'Incorrect password.' });
         }
+        
       } catch (error) {
         return done(error);
       }
@@ -63,7 +64,7 @@ app.get('/auth/google' ,
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login' }),
   (req, res) => {
-    res.redirect('http://localhost:3000/');
+    res.redirect(`${process.env.Redirection_URL}`);
   }
 )
 
@@ -75,14 +76,7 @@ passport.deserializeUser(function(user:any, done:any) {
   done(null, user);
 });
 
-const mongodbURL = process.env.MONGODB_URL;
-mongoose.connect(mongodbURL)
-  .then(() => {
-    console.log(`Connected to MongoDB ${mongodbURL}`);
-  })
-  .catch((error:any) => {
-    console.error('Error connecting to MongoDB:', error);
-  });
+
 
 const port = process.env.PORT || 8000;
 app.listen(port, () => {
