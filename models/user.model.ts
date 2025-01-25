@@ -7,6 +7,7 @@ export interface IUser extends Document {
   name: string
   email: string
   password: string
+
   tokens: { token: string }[]
 }
 
