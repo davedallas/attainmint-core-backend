@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "main": "./index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node dist/index.js",
     "dev": "nodemon index.ts",
-    "build": "scripts build"
+    "build": "tsc",
+    "test": "jest",
+    "watch": "tsc -w"
   },
   "keywords": [],
   "author": "",
