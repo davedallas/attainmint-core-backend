@@ -79,86 +79,12 @@ passport.deserializeUser(function(user:any, done:any) {
   done(null, user);
 });
 
+// 1. Hubspot integration
+app.use('/api/hubspot', hubspotRouter);
 
-
-
-
-
-
-
-
-
-// Hubspot integration
-
-
-
-const hubspot =  require("@hubspot/api-client");
-const url  = require("url");
-const axios = require("axios")
-
-const CLIENT_ID = process.env.HUBSPOT_CLIENT_ID
-const CLIENT_SECRET = process.env.HUBSPOT_CLIENT_SECRET 
-let REDIRECT_URI = process.env.HUBSPOT_REDIRECT_URI
-const SCOPES = "crm.objects.contacts.read";
-
-app.get("/install", (req:any, res:any) => {
-  const hubspotClient = new hubspot.Client();
-  
-  if (CLIENT_ID && REDIRECT_URI) {
-    const uri = hubspotClient.oauth.getAuthorizationUrl(
-      CLIENT_ID,
-      REDIRECT_URI,
-      SCOPES
-    );
-    res.redirect(uri);
-  } else {
-    res.status(500).send("Missing CLIENT_ID or REDIRECT_URI");
-  }
-});
-
-app.get("/oauth-callback", async (req:any, res:any) => {
-  console.log('req--->', req.query.code)
-  // here we create a payload as prescribed by HubSpot for the token exchange where our app exchanges the temporary authorization code for an access token that can be used to call HubSpot APIs
-  const payload = {
-    grant_type: "authorization_code",
-    client_id: CLIENT_ID || '',
-    client_secret: CLIENT_SECRET || '',
-    redirect_uri: REDIRECT_URI || '',
-    code: req.query.code,
-  };
-
-  const params = new url.URLSearchParams(payload);
-
-  // we are using the rest api method here to exchange the tokens
-  const apiResponse = await axios.post(
-    "https://api.hubapi.com/oauth/v1/token",
-    params.toString()
-  );
-
-  console.log('token--->', apiResponse.data.access_token)
-
-// once we receive the access token we can instantiate a hubspot client using the official client library and reuse it across the codebase for our own convenience
-  const hubspotClient = new hubspot.Client({
-    accessToken: apiResponse.data.access_token,
-  });
-
-  // this will create a contact in the hubspot crm of the user who installs our app with firstname and lastname as declared above
-  // await hubspotClient.crm.contacts.basicApi.create(dummyContact);
-  const result = await hubspotClient.crm.contacts.getAll()
-  console.log(result)
-  return res.send(result);
-})
-
-
-
-
-
-
-
-
-
-
-
+// 2 pipedrive
+import pipedriveRoutes from './routes/pipedrive.routes';
+app.use('/api/pipedrive', pipedriveRoutes);
 
 const port = process.env.PORT || 8000;
 app.listen(port, () => {
