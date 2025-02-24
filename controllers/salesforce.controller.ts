@@ -1,37 +1,68 @@
-import dotenv from 'dotenv'
-import { Connection , OAuth2 } from 'jsforce';
+import { Request, Response } from 'express';
+import { Connection } from 'jsforce';
+const crypto = require('crypto');
 
-dotenv.config()
+class SalesforceController {
+    private clientId: string;
+    private clientSecret: string;
+    private redirectUrl: string;
+    private loginUrl: string = 'https://login.salesforce.com';
 
-export const getDataFromSalesforce = async () =>{
-  try {
+    constructor() {
+        this.clientId = process.env.SFROCE_CLIENT_ID!;
+        this.clientSecret = process.env.SFROCE_CLIENT_SECRET!;
+        this.redirectUrl = process.env.SFROCE_REDIRECT_URI!;
+    }
 
-    const oauth2 = new OAuth2({
-      clientId: process.env.SFROCE_CLIENT_ID,
-      clientSecret: process.env.SFROCE_CLIENT_SECRET,
-      redirectUri: process.env.SFROCE_REDIRECT_URI
-    });
+    private generateCodeVerifier(): string {
+        return crypto.randomBytes(32).toString('hex');
+    }
 
-    const authUrl = oauth2.getAuthorizationUrl();
-    console.log('Open the following URL and grant access to your Salesforce account:');
-    console.log(authUrl);
+    private generateCodeChallenge(codeVerifier: string): string {
+        return crypto.createHash('sha256').update(codeVerifier)
+            .digest('base64')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, '');
+    }
 
-    const conn = new Connection({
-      oauth2: oauth2
-    })
+    public install = async (req: any, res: any) => {
+        const conn = new Connection({
+            oauth2: {
+                loginUrl: this.loginUrl,
+                clientId: this.clientId,
+                clientSecret: this.clientSecret,
+                redirectUri: this.redirectUrl
+            }
+        });
 
-    const username = ""
-    const password = ""
+        const codeVerifier = this.generateCodeVerifier();
+        // Store codeVerifier in session for later use
+        req.session.codeVerifier = codeVerifier;
+        const codeChallenge = this.generateCodeChallenge(codeVerifier);
 
-    // const userInfor = await conn.login(username, password);
+        const authUrl = conn.oauth2.getAuthorizationUrl({
+            response_type: 'code',
+            client_id: this.clientId,
+            redirect_uri: this.redirectUrl,
+            scope: 'api',
+            code_challenge: codeChallenge,
+            code_challenge_method: 'S256'
+        });
 
-    // console.log('Successfully authenticated with Salesforce');
-    // console.log('userID:' + userInfor.id);
-    // console.log('Org ID:' + userInfor.organizationId);
-    // return conn;
+        res.redirect(authUrl);
+    }
 
-    return 'ok'
-  } catch(e){
-    console.log(e)
-  }
+    public callback = async (req: Request, res: Response) => {
+        if (!req.query.code) {
+            res.status(500).send('Failed to get authorization code from server callback.');
+            return;
+        }
+
+        const authcode = req.query.code;
+        res.redirect(`http://localhost:3000?salesforce=${encodeURIComponent(JSON.stringify(authcode))}`);
+
+    }
 }
+
+export default new SalesforceController();
