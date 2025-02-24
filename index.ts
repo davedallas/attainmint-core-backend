@@ -8,8 +8,6 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
 import authRouter from './routes/auth.routes';
-import salesforceRouter from './routes/salesforce.routes';
-import hubspotRouter from './routes/hubspot.routes';
 require('./config/dbConnect')
 
 //For env File 
@@ -36,8 +34,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 require('./config/passport');
 
 app.use('/api/auth', authRouter)
-app.use('/api/salesforce' , salesforceRouter)
-app.use('/api/hubspot' , hubspotRouter);
+// app.use('/api/salesforce' , salesforceRouter)
+// app.use('/api/hubspot' , hubspotRouter);
 
 
 passport.use(
@@ -80,11 +78,17 @@ passport.deserializeUser(function(user:any, done:any) {
 });
 
 // 1. Hubspot integration
+import hubspotRouter from './routes/hubspot.routes';
 app.use('/api/hubspot', hubspotRouter);
 
 // 2 pipedrive
 import pipedriveRoutes from './routes/pipedrive.routes';
 app.use('/api/pipedrive', pipedriveRoutes);
+
+// 3 salesforce integration
+import salesforceRouter from './routes/salesforce.routes';
+app.use('/api/salesforce', salesforceRouter);
+
 
 const port = process.env.PORT || 8000;
 app.listen(port, () => {

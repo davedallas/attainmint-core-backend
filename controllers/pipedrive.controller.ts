@@ -36,6 +36,7 @@ export const installPipedrive = async (req: any, res: any) => {
 };
 
 export const handleCallback = async (req: any, res: any) => {
+  console.log('callback')
   try {
     const authCode = req.query.code;
     const newAccessToken = await oauth2.authorize(authCode);
