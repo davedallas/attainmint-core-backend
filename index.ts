@@ -89,8 +89,11 @@ app.use('/api/pipedrive', pipedriveRoutes);
 import salesforceRouter from './routes/salesforce.routes';
 app.use('/api/salesforce', salesforceRouter);
 
+// 4. Activity tracking integration
+import activityTrackingRouter from './routes/activityTracking.routes';
+app.use('/api/activityTracking', activityTrackingRouter);
 
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 8080;
 app.listen(port, () => {
   console.log(`Server is Fire at http://localhost:${port}`);
 });

@@ -54,6 +54,7 @@ class SalesforceController {
     }
 
     public callback = async (req: Request, res: Response) => {
+        console.log("callback");
         if (!req.query.code) {
             res.status(500).send('Failed to get authorization code from server callback.');
             return;
